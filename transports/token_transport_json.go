@@ -40,3 +40,13 @@ func DecodeRevokeTokenRequest(_ context.Context, r *http.Request) (interface{}, 
 func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	return json.NewEncoder(w).Encode(response)
 }
+
+func DecodeIssueTokenResponse(_ context.Context, r *http.Response) (response interface{}, err error) {
+	var issueTokenResponse IssueTokenResponse
+
+	//if err := json.NewDecoder(r.Body).Decode(&issueTokenRequest); err != nil {
+	//	return nil, err
+	//}
+
+	return issueTokenResponse, nil
+}

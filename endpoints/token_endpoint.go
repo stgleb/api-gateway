@@ -18,10 +18,16 @@ func MakeIssueTokenEndpoint(srv TokenService) endpoint.Endpoint {
 
 		r, err := srv.IssueToken(ctx, req.Login, req.Password)
 
+		var errStr string
+
+		if err != nil {
+			errStr = err.Error()
+		}
+
 		return IssueTokenResponse{
 			TokenResponse{
 				r,
-				err.Error(),
+				errStr,
 			},
 		}, nil
 	}
@@ -37,10 +43,15 @@ func MakeVerifyTokenEndpoint(srv TokenService) endpoint.Endpoint {
 
 		err := srv.VerifyToken(ctx, req.Token)
 
+		var errStr string
+		if err != nil {
+			errStr = err.Error()
+		}
+
 		return IssueTokenResponse{
 			TokenResponse{
 				"",
-				err.Error(),
+				errStr,
 			},
 		}, nil
 	}
@@ -54,12 +65,17 @@ func MakeRevokeTokenEndpoint(srv TokenService) endpoint.Endpoint {
 			return nil, errors.New("wrong request format expected RevokeTokenRequest")
 		}
 
-		err := srv.VerifyToken(ctx, req.Token)
+		err := srv.RevokeToken(ctx, req.Token)
+		var errStr string
+
+		if err != nil {
+			errStr = err.Error()
+		}
 
 		return RevokeTokenResponse{
 			TokenResponse{
 				"",
-				err.Error(),
+				errStr,
 			},
 		}, nil
 	}

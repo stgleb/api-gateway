@@ -2,7 +2,7 @@ package data
 
 type TokenResponse struct {
 	Token string `json:"token"`
-	Error string `json:"error"`
+	Error string `json:"error,omitempty"`
 }
 
 type IssueTokenResponse struct {

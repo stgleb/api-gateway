@@ -1,17 +1,18 @@
 package main
 
 import (
-	"golang.org/x/time/rate"
 	. "api-gateway"
 	. "api-gateway/endpoints"
+	. "api-gateway/middleware"
 	. "api-gateway/services"
 	. "api-gateway/transports"
-	. "api-gateway/middleware"
 	"flag"
 	"github.com/go-kit/kit/log"
-	. "github.com/go-kit/kit/ratelimit"
+	//. "github.com/go-kit/kit/ratelimit"
 	httptransport "github.com/go-kit/kit/transport/http"
+	//"golang.org/x/time/rate"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -34,6 +35,22 @@ func main() {
 
 	var tokenService TokenService = TokenServiceImpl{}
 
+	proxyUrl := &url.URL{
+		Scheme: "https",
+		Host:   "google.com",
+		Path:   "/",
+	}
+
+	tokenService = ProxyMiddleware{
+		tokenService,
+		MakeProxyIssueTokenEndpoint(proxyUrl),
+	}
+
+	tokenService = LoggingMiddleWare{
+		logger,
+		tokenService,
+	}
+
 	issueTokenEndpoint := MakeIssueTokenEndpoint(tokenService)
 	verifyTokenEndpoint := MakeVerifyTokenEndpoint(tokenService)
 	revokeTokenEndpoint := MakeRevokeTokenEndpoint(tokenService)
@@ -43,18 +60,13 @@ func main() {
 	revokeTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "RevokeToken"))(revokeTokenEndpoint)
 
 	// Cover issue token with limiter
-	rateLimitMiddleware10 := NewErroringLimiter(rate.NewLimiter(10, 1))
-	rateLimitMiddleware5 := NewErroringLimiter(rate.NewLimiter(5, 1))
-	rateLimitMiddleware1 := NewErroringLimiter(rate.NewLimiter(1, 1))
-
-	issueTokenEndpoint = rateLimitMiddleware10(issueTokenEndpoint)
-	verifyTokenEndpoint = rateLimitMiddleware5(verifyTokenEndpoint)
-	revokeTokenEndpoint = rateLimitMiddleware1(revokeTokenEndpoint)
-
-	tokenService = LoggingMiddleWare{
-		logger,
-		tokenService,
-	}
+	//rateLimitMiddleware10 := NewErroringLimiter(rate.NewLimiter(10, 1))
+	//rateLimitMiddleware5 := NewErroringLimiter(rate.NewLimiter(5, 1))
+	//rateLimitMiddleware1 := NewErroringLimiter(rate.NewLimiter(1, 1))
+	//
+	//issueTokenEndpoint = rateLimitMiddleware10(issueTokenEndpoint)
+	//verifyTokenEndpoint = rateLimitMiddleware5(verifyTokenEndpoint)
+	//revokeTokenEndpoint = rateLimitMiddleware1(revokeTokenEndpoint)
 
 	issueTokenHandler := httptransport.NewServer(
 		issueTokenEndpoint,
