@@ -44,9 +44,9 @@ func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface
 func DecodeIssueTokenResponse(_ context.Context, r *http.Response) (response interface{}, err error) {
 	var issueTokenResponse IssueTokenResponse
 
-	//if err := json.NewDecoder(r.Body).Decode(&issueTokenRequest); err != nil {
-	//	return nil, err
-	//}
+	if err := json.NewDecoder(r.Body).Decode(&issueTokenResponse); err != nil {
+		return nil, err
+	}
 
 	return issueTokenResponse, nil
 }
