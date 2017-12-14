@@ -5,14 +5,10 @@ type IssueTokenRequest struct {
 	Password string `json:"password"`
 }
 
-type TokenRequest struct {
+type VerifyTokenRequest struct {
 	Token string `json:"token"`
 }
 
-type VerifyTokenRequest struct {
-	TokenRequest
-}
-
 type RevokeTokenRequest struct {
-	TokenRequest
+	Token string `json:"token"`
 }

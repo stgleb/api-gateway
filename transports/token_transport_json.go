@@ -50,3 +50,23 @@ func DecodeIssueTokenResponse(_ context.Context, r *http.Response) (response int
 
 	return issueTokenResponse, nil
 }
+
+func DecodeVerifyTokenResponse(_ context.Context, r *http.Response) (response interface{}, err error) {
+	var verifyTokenResponse VerifyTokenResponse
+
+	if err := json.NewDecoder(r.Body).Decode(&verifyTokenResponse); err != nil {
+		return nil, err
+	}
+
+	return verifyTokenResponse, nil
+}
+
+func DecodeRevokeTokenResponse(_ context.Context, r *http.Response) (response interface{}, err error) {
+	var revokeTokenResponse RevokeTokenResponse
+
+	if err := json.NewDecoder(r.Body).Decode(&revokeTokenResponse); err != nil {
+		return nil, err
+	}
+
+	return revokeTokenResponse, nil
+}

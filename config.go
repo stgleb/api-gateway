@@ -7,13 +7,22 @@ import (
 var config_instance *TomlConfig
 
 type TomlConfig struct {
-	Main MainConfig
+	Main         MainConfig
+	TokenService TokenServiceConfig
 }
 
 type MainConfig struct {
 	Title     string
 	ListenStr string
 	Release   string
+}
+
+type TokenServiceConfig struct {
+	ListenStr       string
+	Protocol        string
+	IssueTokenPath  string
+	VerifyTokenPath string
+	RevokeTokenPath string
 }
 
 func GetConfig() *TomlConfig {
