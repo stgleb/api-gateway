@@ -4,6 +4,7 @@ import (
 	. "api-gateway"
 	. "api-gateway/endpoints"
 	. "api-gateway/middleware"
+	. "api-gateway/services"
 	. "api-gateway/transports"
 	"flag"
 	"github.com/go-kit/kit/log"
@@ -69,7 +70,7 @@ func main() {
 	verifyTokenEndpoint = rateLimitMiddleware5(verifyTokenEndpoint)
 	revokeTokenEndpoint = rateLimitMiddleware1(revokeTokenEndpoint)
 
-	tokenService = ProxyMiddleware{
+	tokenService = TokenProxyService{
 		issueTokenEndpoint,
 		verifyTokenEndpoint,
 		revokeTokenEndpoint,

@@ -1,7 +1,6 @@
-package middleware
+package services
 
 import (
-	"api-gateway"
 	"api-gateway/data"
 	"context"
 	"fmt"
@@ -9,15 +8,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ProxyMiddleware struct {
+type TokenProxyService struct {
 	IssueTokenEndpoint  endpoint.Endpoint
 	VerifyTokenEndpoint endpoint.Endpoint
 	RevokeTokenEndpoint endpoint.Endpoint
 }
 
-type Middleware func(api_gateway.TokenService) api_gateway.TokenService
-
-func (proxy ProxyMiddleware) IssueToken(ctx context.Context, login, password string) (string, error) {
+func (proxy TokenProxyService) IssueToken(ctx context.Context, login, password string) (string, error) {
 	r, err := proxy.IssueTokenEndpoint(ctx, data.IssueTokenRequest{
 		login,
 		password,
@@ -40,7 +37,7 @@ func (proxy ProxyMiddleware) IssueToken(ctx context.Context, login, password str
 	return resp.Token, nil
 }
 
-func (proxy ProxyMiddleware) VerifyToken(ctx context.Context, token string) error {
+func (proxy TokenProxyService) VerifyToken(ctx context.Context, token string) error {
 	r, err := proxy.VerifyTokenEndpoint(ctx, data.VerifyTokenRequest{
 		token,
 	})
@@ -62,7 +59,7 @@ func (proxy ProxyMiddleware) VerifyToken(ctx context.Context, token string) erro
 	return nil
 }
 
-func (proxy ProxyMiddleware) RevokeToken(ctx context.Context, token string) error {
+func (proxy TokenProxyService) RevokeToken(ctx context.Context, token string) error {
 	r, err := proxy.RevokeTokenEndpoint(ctx, data.RevokeTokenRequest{
 		token,
 	})
