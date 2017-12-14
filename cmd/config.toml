@@ -1,0 +1,5 @@
+[Main]
+Title = "Api gateway service v0.1"
+ListenStr = "0.0.0.0:9090"
+Release = "0.1"
+
