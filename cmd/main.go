@@ -7,6 +7,7 @@ import (
 	. "api-gateway/services"
 	. "api-gateway/transports"
 	"flag"
+	"fmt"
 	"github.com/go-kit/kit/log"
 	. "github.com/go-kit/kit/ratelimit"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -27,6 +28,11 @@ func init() {
 
 func main() {
 	config, err := NewConfig(configFileName)
+
+	if err != nil {
+		panic(err)
+	}
+
 	logger := log.NewLogfmtLogger(os.Stderr)
 
 	var tokenService TokenService
@@ -57,9 +63,12 @@ func main() {
 	verifyTokenEndpoint := MakeProxyVerifyTokenEndpoint(verifyTokenProxyURL)
 	revokeTokenEndpoint := MakeProxyRevokeTokenEndpoint(revokeTokenProxyURL)
 
-	issueTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "IssueToken"))(issueTokenEndpoint)
-	verifyTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "VerifyToken"))(verifyTokenEndpoint)
-	revokeTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "RevokeToken"))(revokeTokenEndpoint)
+	issueTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "IssueToken"),
+		"issueTokenEndpoint")(issueTokenEndpoint)
+	verifyTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "VerifyToken"),
+		"verifyTokenEndpoint")(verifyTokenEndpoint)
+	revokeTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "RevokeToken"),
+		"revokeTokenEndpoint")(revokeTokenEndpoint)
 
 	// Cover issue token with limiter
 	rateLimitMiddleware10 := NewErroringLimiter(rate.NewLimiter(10, 1))
@@ -103,6 +112,6 @@ func main() {
 	http.Handle("/token/verify", verifyTokenHandler)
 	http.Handle("/token/revoke", revokerTokenHandler)
 
-	logger.Log("Start listen port %s\n", config.Main.ListenStr)
+	logger.Log(fmt.Sprintf("Start listen port %s\n", config.Main.ListenStr))
 	logger.Log(http.ListenAndServe(config.Main.ListenStr, nil))
 }
