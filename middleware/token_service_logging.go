@@ -12,7 +12,7 @@ type LoggingMiddleWare struct {
 }
 
 func (mw LoggingMiddleWare) IssueToken(ctx context.Context, login, password string) (string, error) {
-	mw.Logger.Log("method", "IssueToken", login, password)
+	mw.Logger.Log("method", "IssueToken", "login", login, "password", password)
 	token, err := mw.Next.IssueToken(ctx, login, password)
 	mw.Logger.Log("method", "IssueToken", token, err)
 
@@ -20,17 +20,17 @@ func (mw LoggingMiddleWare) IssueToken(ctx context.Context, login, password stri
 }
 
 func (mw LoggingMiddleWare) VerifyToken(ctx context.Context, token string) error {
-	mw.Logger.Log("method", "VerifyToken", token)
+	mw.Logger.Log("method", "VerifyToken", "token", token)
 	err := mw.Next.VerifyToken(ctx, token)
-	mw.Logger.Log("method", "VerifyToken", err)
+	mw.Logger.Log("method", "VerifyToken", "error", err.Error())
 
 	return err
 }
 
 func (mw LoggingMiddleWare) RevokeToken(ctx context.Context, token string) error {
-	mw.Logger.Log("method", "RevokeToken", token)
+	mw.Logger.Log("method", "RevokeToken", "token", token)
 	err := mw.Next.RevokeToken(ctx, token)
-	mw.Logger.Log("method", "RevokeToken", err)
+	mw.Logger.Log("method", "RevokeToken", "error", err.Error())
 
 	return err
 }

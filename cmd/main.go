@@ -112,6 +112,6 @@ func main() {
 	http.Handle("/token/verify", verifyTokenHandler)
 	http.Handle("/token/revoke", revokerTokenHandler)
 
-	logger.Log(fmt.Sprintf("Start listen port %s\n", config.Main.ListenStr))
+	logger.Log("main", fmt.Sprintf("Start listen port %s", config.Main.ListenStr))
 	logger.Log(http.ListenAndServe(config.Main.ListenStr, nil))
 }
