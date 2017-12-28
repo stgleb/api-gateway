@@ -15,7 +15,7 @@ type TokenProxyService struct {
 }
 
 func (proxy TokenProxyService) IssueToken(ctx context.Context, login, password string) (string, error) {
-	r, err := proxy.IssueTokenEndpoint(ctx, data.IssueTokenRequest{
+	r, err := proxy.IssueTokenEndpoint(ctx, data.LoginRequest{
 		login,
 		password,
 	})

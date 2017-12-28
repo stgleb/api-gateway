@@ -8,7 +8,7 @@ import (
 )
 
 func DecodeIssueTokenRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var issueTokenRequest IssueTokenRequest
+	var issueTokenRequest LoginRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&issueTokenRequest); err != nil {
 		return nil, err
