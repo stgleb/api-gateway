@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"io"
 )
 
 var (
@@ -33,7 +34,21 @@ func main() {
 		panic(err)
 	}
 
-	logger := log.NewLogfmtLogger(os.Stderr)
+	logfile, err := os.OpenFile(config.Main.LogFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer logfile.Close()
+
+	fileWriter := log.NewSyncWriter(logfile)
+	logWriter := io.MultiWriter(fileWriter, os.Stderr)
+
+	logger := log.NewLogfmtLogger(logWriter)
+
+	logger = log.With(logger, "timestamp", log.DefaultTimestampUTC)
+	logger = log.With(logger, "caller", log.DefaultCaller)
 
 	var tokenService TokenService
 
@@ -62,9 +77,6 @@ func main() {
 	issueTokenEndpoint := MakeProxyIssueTokenEndpoint(issueTokenProxyURL)
 	verifyTokenEndpoint := MakeProxyVerifyTokenEndpoint(verifyTokenProxyURL)
 	revokeTokenEndpoint := MakeProxyRevokeTokenEndpoint(revokeTokenProxyURL)
-
-	logger = log.With(logger, "timestamp", log.DefaultTimestampUTC)
-	logger = log.With(logger, "caller", log.DefaultCaller)
 
 	issueTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "IssueToken"),
 		"issueTokenEndpoint")(issueTokenEndpoint)

@@ -15,6 +15,7 @@ type MainConfig struct {
 	Title     string
 	ListenStr string
 	Release   string
+	LogFile string
 }
 
 type TokenServiceConfig struct {
