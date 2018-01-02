@@ -85,10 +85,7 @@ func main() {
 		revokeTokenEndpoint,
 	}
 
-	tokenService = LoggingMiddleWare{
-		logger,
-		tokenService,
-	}
+	tokenService = NewLoggingMiddleWare(tokenService, logger)
 
 	issueTokenHandler := httptransport.NewServer(
 		issueTokenEndpoint,
@@ -113,5 +110,5 @@ func main() {
 	http.Handle("/token/revoke", revokerTokenHandler)
 
 	logger.Log("main", fmt.Sprintf("Start listen port %s", config.Main.ListenStr))
-	logger.Log(http.ListenAndServe(config.Main.ListenStr, nil))
+	logger.Log("error", http.ListenAndServe(config.Main.ListenStr, nil))
 }
