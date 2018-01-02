@@ -34,6 +34,7 @@ func main() {
 		panic(err)
 	}
 
+	// TODO(stgleb): Make file writer buffered
 	logfile, err := os.OpenFile(config.Main.LogFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
 
 	if err != nil {
