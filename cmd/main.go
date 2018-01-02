@@ -63,6 +63,9 @@ func main() {
 	verifyTokenEndpoint := MakeProxyVerifyTokenEndpoint(verifyTokenProxyURL)
 	revokeTokenEndpoint := MakeProxyRevokeTokenEndpoint(revokeTokenProxyURL)
 
+	logger = log.With(logger, "timestamp", log.DefaultTimestampUTC)
+	logger = log.With(logger, "caller", log.DefaultCaller)
+
 	issueTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "IssueToken"),
 		"issueTokenEndpoint")(issueTokenEndpoint)
 	verifyTokenEndpoint = LoggingMiddleware(log.With(logger, "method", "VerifyToken"),
