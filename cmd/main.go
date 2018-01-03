@@ -16,10 +16,28 @@ import (
 	"net/url"
 	"os"
 	"io"
+	"github.com/go-kit/kit/metrics"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 var (
 	configFileName string
+
+	issueTokenCounter metrics.Counter
+	verifyTokenCounter metrics.Counter
+	revokeTokenCounter metrics.Counter
+
+
+	issueTokenHistogram metrics.Histogram
+	verifyTokenHistogram metrics.Histogram
+	revokeTokenHistogram metrics.Histogram
+
+	issueTokenLabel = "issueToken"
+	verifyTokenLabel = "verifyToken"
+	revokeTokenLabel= "revokeToken"
 )
 
 func init() {
@@ -95,6 +113,39 @@ func main() {
 	verifyTokenEndpoint = rateLimitMiddleware5(verifyTokenEndpoint)
 	revokeTokenEndpoint = rateLimitMiddleware1(revokeTokenEndpoint)
 
+	// Issue token
+	issueTokenCounter := kitprometheus.NewCounter(stdprometheus.NewCounterVec(stdprometheus.CounterOpts{
+		Name: issueTokenLabel,
+	}, []string{issueTokenLabel}))
+
+	issueTokenHistogram := kitprometheus.NewHistogram(stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
+		Name: issueTokenLabel,
+	}, []string{issueTokenLabel}))
+
+	issueTokenEndpoint = MetricsMiddleware(issueTokenCounter, issueTokenHistogram, issueTokenLabel)(issueTokenEndpoint)
+
+	// Verify token
+	verifyTokenCounter = kitprometheus.NewCounter(stdprometheus.NewCounterVec(stdprometheus.CounterOpts{
+		Name: verifyTokenLabel,
+	}, []string{verifyTokenLabel}))
+
+	verifyTokenHistogram = kitprometheus.NewHistogram(stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
+		Name: verifyTokenLabel,
+	}, []string{verifyTokenLabel}))
+
+	verifyTokenEndpoint = MetricsMiddleware(verifyTokenCounter, verifyTokenHistogram, verifyTokenLabel)(verifyTokenEndpoint)
+
+	// Revoke token
+	revokeTokenCounter = kitprometheus.NewCounter(stdprometheus.NewCounterVec(stdprometheus.CounterOpts{
+		Name: revokeTokenLabel,
+	}, []string{revokeTokenLabel}))
+
+	revokeTokenHistogram = kitprometheus.NewHistogram(stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
+		Name: revokeTokenLabel,
+	}, []string{revokeTokenLabel}))
+
+	revokeTokenEndpoint = MetricsMiddleware(revokeTokenCounter, revokeTokenHistogram, revokeTokenLabel)(revokeTokenEndpoint)
+
 	tokenService = TokenProxyService{
 		issueTokenEndpoint,
 		verifyTokenEndpoint,
@@ -121,6 +172,7 @@ func main() {
 		EncodeResponse,
 	)
 
+	http.Handle("/metrics", promhttp.Handler())
 	http.Handle("/token", issueTokenHandler)
 	http.Handle("/token/verify", verifyTokenHandler)
 	http.Handle("/token/revoke", revokerTokenHandler)

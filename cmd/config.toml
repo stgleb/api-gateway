@@ -1,6 +1,6 @@
 [Main]
 Title = "Api gateway service v0.1"
-ListenStr = "0.0.0.0:9090"
+ListenStr = "0.0.0.0:9000"
 Release = "0.1"
 LogFile="api-gateway.log"
 
