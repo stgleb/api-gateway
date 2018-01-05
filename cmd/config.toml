@@ -4,9 +4,23 @@ Release = "0.1"
 ServiceName="api_Gateway"
 LogFile="api-gateway.log"
 
+[Server]
+ReadTimeout=5
+WriteTimeout=10
+IdleTimeout=120
+ShutdownTimeout=5
+
 [TokenService]
-ListenStr="localhost:8080"
+ListenStr=":6666"
 Protocol="http"
 IssueTokenPath="/token"
 VerifyTokenPath="/token/verify"
 RevokeTokenPath="/token/revoke"
+
+[ServiceDiscovery]
+ConsulAddress="0.0.0.0"
+ConsulPort=8500
+AdvertisedAddress="0.0.0.0"
+AdvertisedPort=8080
+Interval="10s"
+Timeout="1s"

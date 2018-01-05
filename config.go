@@ -2,13 +2,16 @@ package api_gateway
 
 import (
 	"github.com/BurntSushi/toml"
+	"time"
 )
 
 var config_instance *TomlConfig
 
 type TomlConfig struct {
-	Main         MainConfig
-	TokenService TokenServiceConfig
+	Main             MainConfig
+	Server           ServerConfig
+	TokenService     TokenServiceConfig
+	ServiceDiscovery ServiceDiscoveryConfig
 }
 
 type MainConfig struct {
@@ -18,12 +21,28 @@ type MainConfig struct {
 	LogFile     string
 }
 
+type ServerConfig struct {
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ShutdownTimeout time.Duration
+}
+
 type TokenServiceConfig struct {
 	ListenStr       string
 	Protocol        string
 	IssueTokenPath  string
 	VerifyTokenPath string
 	RevokeTokenPath string
+}
+
+type ServiceDiscoveryConfig struct {
+	ConsulAddress     string
+	ConsulPort        int
+	AdvertisedAddress string
+	AdvertisedPort    int
+	Interval          string
+	Timeout           string
 }
 
 func GetConfig() *TomlConfig {

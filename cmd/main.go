@@ -4,8 +4,10 @@ import (
 	. "api-gateway"
 	. "api-gateway/endpoints"
 	. "api-gateway/middleware"
+	. "api-gateway/registration"
 	. "api-gateway/services"
 	. "api-gateway/transports"
+
 	"flag"
 	"fmt"
 	"github.com/go-kit/kit/log"
@@ -19,10 +21,14 @@ import (
 	"os"
 
 	"bufio"
+	"context"
 	"github.com/go-kit/kit/endpoint"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 var (
@@ -149,8 +155,32 @@ func main() {
 	http.Handle("/token/revoke", revokerTokenHandler)
 	http.Handle("/health", healthCheckHandler)
 
+	// Register in consul for service discovery
+	registrar := NewRegistrar(config, logger)
+	registrar.Register()
+
+	server := &http.Server{
+		Addr:         config.TokenService.ListenStr,
+		ReadTimeout:  config.Server.ReadTimeout * time.Second,
+		WriteTimeout: config.Server.WriteTimeout * time.Second,
+		IdleTimeout:  config.Server.IdleTimeout * time.Second,
+	}
+
+	// Basic cleanup
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		registrar.Deregister()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), config.Server.ShutdownTimeout*time.Second)
+		defer cancel()
+
+		server.Shutdown(shutdownCtx)
+	}()
+
 	logger.Log("main", fmt.Sprintf("Start listen port %s", config.TokenService.ListenStr))
-	logger.Log("error", http.ListenAndServe(config.TokenService.ListenStr, nil))
+	if err := server.ListenAndServe(); err != nil {
+		logger.Log("error", err)
+	}
 }
 
 func wrapLogging(issueTokenEndpoint endpoint.Endpoint, logger log.Logger, verifyTokenEndpoint endpoint.Endpoint,
