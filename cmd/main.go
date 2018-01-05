@@ -27,7 +27,6 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -160,20 +159,22 @@ func main() {
 	registrar.Register()
 
 	server := &http.Server{
-		Addr:         config.TokenService.ListenStr,
+		Addr: config.TokenService.ListenStr,
 		ReadTimeout:  config.Server.ReadTimeout * time.Second,
 		WriteTimeout: config.Server.WriteTimeout * time.Second,
 		IdleTimeout:  config.Server.IdleTimeout * time.Second,
 	}
 
+	shutDownChan := make(chan os.Signal, 1)
+	signal.Notify(shutDownChan, os.Interrupt)
+
 	// Basic cleanup
 	go func() {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		registrar.Deregister()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), config.Server.ShutdownTimeout*time.Second)
 		defer cancel()
 
+		<-shutDownChan
 		server.Shutdown(shutdownCtx)
 	}()
 

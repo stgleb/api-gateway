@@ -11,7 +11,7 @@ IdleTimeout=120
 ShutdownTimeout=5
 
 [TokenService]
-ListenStr=":6666"
+ListenStr="0.0.0.0:9091"
 Protocol="http"
 IssueTokenPath="/token"
 VerifyTokenPath="/token/verify"
