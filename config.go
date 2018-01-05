@@ -12,10 +12,10 @@ type TomlConfig struct {
 }
 
 type MainConfig struct {
-	Title     string
-	ListenStr string
-	Release   string
-	LogFile string
+	Title       string
+	Release     string
+	ServiceName string
+	LogFile     string
 }
 
 type TokenServiceConfig struct {

@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 func MetricsMiddleware(count metrics.Counter, latency metrics.Histogram, endpointName string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (interface{}, error) {
