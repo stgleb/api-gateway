@@ -31,14 +31,17 @@ var (
 	issueTokenCounter  metrics.Counter
 	verifyTokenCounter metrics.Counter
 	revokeTokenCounter metrics.Counter
+	healthCheckCounter metrics.Counter
 
 	issueTokenHistogram  metrics.Histogram
 	verifyTokenHistogram metrics.Histogram
 	revokeTokenHistogram metrics.Histogram
+	healthCheckHistogram metrics.Histogram
 
 	issueTokenLabel  = "issueToken"
 	verifyTokenLabel = "verifyToken"
 	revokeTokenLabel = "revokeToken"
+	healthCheckLabel = "healthCheck"
 )
 
 func init() {
@@ -98,18 +101,20 @@ func main() {
 	issueTokenEndpoint := MakeProxyIssueTokenEndpoint(issueTokenProxyURL)
 	verifyTokenEndpoint := MakeProxyVerifyTokenEndpoint(verifyTokenProxyURL)
 	revokeTokenEndpoint := MakeProxyRevokeTokenEndpoint(revokeTokenProxyURL)
+	healthCheckEndpoint := MakeHealthCheckEndpoint(tokenService)
 
 	issueTokenEndpoint, verifyTokenEndpoint, revokeTokenEndpoint =
 		wrapLogging(issueTokenEndpoint, logger, verifyTokenEndpoint, revokeTokenEndpoint)
 	issueTokenEndpoint, verifyTokenEndpoint, revokeTokenEndpoint =
 		wrapLimit(issueTokenEndpoint, verifyTokenEndpoint, revokeTokenEndpoint)
 	issueTokenEndpoint, verifyTokenEndpoint, revokeTokenEndpoint =
-		wrapPrometheus(config, issueTokenEndpoint, verifyTokenEndpoint, revokeTokenEndpoint)
+		wrapPrometheus(config, issueTokenEndpoint, verifyTokenEndpoint, revokeTokenEndpoint, healthCheckEndpoint)
 
 	tokenService = TokenProxyService{
-		issueTokenEndpoint,
-		verifyTokenEndpoint,
-		revokeTokenEndpoint,
+		IssueTokenEndpoint:  issueTokenEndpoint,
+		VerifyTokenEndpoint: verifyTokenEndpoint,
+		RevokeTokenEndpoint: revokeTokenEndpoint,
+		HealthCheckEndpoint: healthCheckEndpoint,
 	}
 
 	tokenService = NewLoggingMiddleWare(tokenService, logger)
@@ -132,10 +137,17 @@ func main() {
 		EncodeResponse,
 	)
 
+	healthCheckHandler := httptransport.NewServer(
+		healthCheckEndpoint,
+		DecodeHealthRequest,
+		httptransport.EncodeJSONResponse,
+	)
+
 	http.Handle("/metrics", promhttp.Handler())
 	http.Handle("/token", issueTokenHandler)
 	http.Handle("/token/verify", verifyTokenHandler)
 	http.Handle("/token/revoke", revokerTokenHandler)
+	http.Handle("/health", healthCheckHandler)
 
 	logger.Log("main", fmt.Sprintf("Start listen port %s", config.TokenService.ListenStr))
 	logger.Log("error", http.ListenAndServe(config.TokenService.ListenStr, nil))
@@ -167,54 +179,73 @@ func wrapLimit(issueTokenEndpoint endpoint.Endpoint, verifyTokenEndpoint endpoin
 }
 
 func wrapPrometheus(config *TomlConfig, issueTokenEndpoint endpoint.Endpoint, verifyTokenEndpoint endpoint.Endpoint,
-	revokeTokenEndpoint endpoint.Endpoint) (endpoint.Endpoint, endpoint.Endpoint, endpoint.Endpoint) {
+	revokeTokenEndpoint endpoint.Endpoint, healthCheckEndpoint endpoint.Endpoint) (endpoint.Endpoint, endpoint.Endpoint, endpoint.Endpoint) {
 	// Issue token
-	issueTokenCounter := kitprometheus.NewCounterFrom(
+	issueTokenCounter = kitprometheus.NewCounterFrom(
 		stdprometheus.CounterOpts{
-			Name: "issue_token_counter",
+			Name:      "issue_token_counter",
 			Subsystem: config.Main.ServiceName,
-			Help: "Issue token counter"},
+			Help:      "Issue token counter"},
 		[]string{issueTokenLabel})
-	issueTokenHistogram := kitprometheus.NewHistogramFrom(
+	issueTokenHistogram = kitprometheus.NewHistogramFrom(
 		stdprometheus.HistogramOpts{
-			Name: "issue_token_histogram",
+			Name:      "issue_token_histogram",
 			Subsystem: config.Main.ServiceName,
-			Help: "Issue token histogram"},
+			Help:      "Issue token histogram"},
 		[]string{issueTokenLabel})
 	issueTokenEndpoint = MetricsMiddleware(issueTokenCounter, issueTokenHistogram, issueTokenLabel)(issueTokenEndpoint)
 
 	// Verify token
 	verifyTokenCounter = kitprometheus.NewCounterFrom(
 		stdprometheus.CounterOpts{
-			Name: "verify_token_counter",
+			Name:      "verify_token_counter",
 			Subsystem: config.Main.ServiceName,
-			Help: "Verify token counter",
+			Help:      "Verify token counter",
 		}, []string{verifyTokenLabel})
 	verifyTokenHistogram = kitprometheus.NewHistogramFrom(
 		stdprometheus.HistogramOpts{
-			Name: "verify_token_histogram",
+			Name:      "verify_token_histogram",
 			Subsystem: config.Main.ServiceName,
-			Help: "Verify token histogram",
+			Help:      "Verify token histogram",
 		}, []string{verifyTokenLabel})
 	verifyTokenEndpoint = MetricsMiddleware(verifyTokenCounter, verifyTokenHistogram, verifyTokenLabel)(verifyTokenEndpoint)
 
 	// Revoke token
 	revokeTokenCounter = kitprometheus.NewCounterFrom(
 		stdprometheus.CounterOpts{
-			Name: "revoke_token_counter",
+			Name:      "revoke_token_counter",
 			Subsystem: config.Main.ServiceName,
-			Help: "Revoke token counter",
+			Help:      "Revoke token counter",
 		},
 		[]string{revokeTokenLabel})
 	revokeTokenHistogram = kitprometheus.NewHistogramFrom(
 		stdprometheus.HistogramOpts{
-			Name: "revoke_token_histogram",
+			Name:      "revoke_token_histogram",
 			Subsystem: config.Main.ServiceName,
-			Help: "Revoke token histogram",
+			Help:      "Revoke token histogram",
 		},
 		[]string{revokeTokenLabel})
 
 	revokeTokenEndpoint = MetricsMiddleware(revokeTokenCounter, revokeTokenHistogram, revokeTokenLabel)(revokeTokenEndpoint)
+
+	// Revoke token
+	healthCheckCounter = kitprometheus.NewCounterFrom(
+		stdprometheus.CounterOpts{
+			Name:      "healt_check_counter",
+			Subsystem: config.Main.ServiceName,
+			Help:      "Health check counter",
+		},
+		[]string{healthCheckLabel})
+
+	healthCheckHistogram = kitprometheus.NewHistogramFrom(
+		stdprometheus.HistogramOpts{
+			Name:      "health_check_histogram",
+			Subsystem: config.Main.ServiceName,
+			Help:      "Health check histogram",
+		},
+		[]string{healthCheckLabel})
+
+	healthCheckEndpoint = MetricsMiddleware(healthCheckCounter, healthCheckHistogram, healthCheckLabel)(healthCheckEndpoint)
 
 	return issueTokenEndpoint, verifyTokenEndpoint, revokeTokenEndpoint
 }

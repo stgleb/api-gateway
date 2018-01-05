@@ -1,7 +1,7 @@
 [Main]
 Title = "Api gateway service v0.1"
 Release = "0.1"
-ServiceName="Api Gateway"
+ServiceName="api_Gateway"
 LogFile="api-gateway.log"
 
 [TokenService]

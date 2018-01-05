@@ -41,3 +41,11 @@ func (mw LoggingMiddleWare) RevokeToken(ctx context.Context, token string) error
 
 	return err
 }
+
+func (mw LoggingMiddleWare) HealthCheck() bool {
+	mw.Logger.Log("method", "healthCheck")
+	status := mw.next.HealthCheck()
+	mw.Logger.Log("method", "healthCheck")
+
+	return status
+}

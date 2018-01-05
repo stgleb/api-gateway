@@ -12,6 +12,7 @@ type TokenProxyService struct {
 	IssueTokenEndpoint  endpoint.Endpoint
 	VerifyTokenEndpoint endpoint.Endpoint
 	RevokeTokenEndpoint endpoint.Endpoint
+	HealthCheckEndpoint endpoint.Endpoint
 }
 
 func (proxy TokenProxyService) IssueToken(ctx context.Context, login, password string) (string, error) {
@@ -79,4 +80,8 @@ func (proxy TokenProxyService) RevokeToken(ctx context.Context, token string) er
 	}
 
 	return nil
+}
+
+func (proxy TokenProxyService) HealthCheck() bool {
+	return true
 }
